@@ -17,10 +17,10 @@ public class User {
     private String email;
     @Column(name = "password", nullable = false)
     private String password;
-    @Column(name = "age")
+    @Column(name = "age", nullable = false)
     private Integer age;
-    @Column(name = "address2")
-    private String address;
+    @Column(name = "phoneNumber")
+    private String phoneNumber;
 
     public User(){
     }
@@ -71,5 +71,13 @@ public class User {
 
     public Integer getAge() {
         return age;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 }

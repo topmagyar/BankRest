@@ -25,4 +25,16 @@ public class UserDaoImpl implements UserDao {
 
         return createdUser.getId();
     }
+
+    @Override
+    public User findByEmail(String email) {
+        User user = null;
+
+        try {
+            user = repository.findByEmail(email);
+        } catch (Exception e) {
+            System.out.println("We got exception here: " + e.getMessage());
+        }
+        return user;
+    }
 }

@@ -7,6 +7,7 @@ import com.dev.bank.models.request.AuthRegisterRequest;
 import com.dev.bank.models.response.AuthLoginResponse;
 import com.dev.bank.models.response.AuthRegisterResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Period;
@@ -17,6 +18,10 @@ public class AuthenticationService {
 
     @Autowired
     private UserDao userDao;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private TokenService tokenService;
 
     public AuthLoginResponse login(AuthLoginRequest request) {
         String email = request.getEmail();
@@ -37,11 +42,31 @@ public class AuthenticationService {
 
             return response;
         }
+        User user = userDao.findByEmail(email);
+//        if (user == null) {
+//            response.setSuccess(false);
+//            response.setMessage("User with email: '" + email + "' doesn't exist in the system");
+//
+//            return response;
+//        }
+//
+//        if (!passwordEncoder.matches(password, expectedHashedPassword)) {
+//            response.setSuccess(false);
+//            response.setMessage("Password is incorrect");
+//
+//            return response;
+//        }
 
-        //TODO Replace with real login process here
+        if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
+            response.setSuccess(false);
+            response.setMessage("Wrong credentials");
+
+            return response;
+        }
+
         response.setSuccess(true);
-        response.setUserId(123);
-        response.setToken("WillBeGeneratedInFuture");
+        response.setUserId(user.getId());
+        response.setToken(tokenService.generateToken(user.getId()));
 
         return response;
     }
@@ -57,17 +82,28 @@ public class AuthenticationService {
             return response;
         }
 
-        //TODO Implement save data from request
-        User user = new User();
-        user.setEmail("abcd@gmail.com");
-//        user.setPassword("123123213");
-        user.setFirstName("ABC");
-        user.setLastName("DCE");
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
 
-        Integer userId = userDao.save(user);
+        User newUser = new User();
+        newUser.setEmail(request.getEmail());
+        newUser.setPassword(hashedPassword);
+        newUser.setFirstName(request.getFirstName());
+        newUser.setLastName(request.getLastName());
+        newUser.setAge(getAge(request.getBirthday()));
+        newUser.setPhoneNumber(request.getPhoneNumber());
+
+        Integer userId = userDao.save(newUser);
+
+        if (userId == null || userId == 0) {
+            response.setSuccess(false);
+            response.setMessage("Something went wrong and we're not able to register your account");
+
+            return response;
+        }
 
         response.setSuccess(true);
         response.setUserId(userId);
+        response.setToken(tokenService.generateToken(userId));
 
         return response;
     }
